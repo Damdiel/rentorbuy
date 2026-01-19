@@ -1,6 +1,6 @@
 # Rent vs Buy Calculator
 
-A comprehensive financial calculator that helps you decide whether renting or buying a home makes more sense for your situation. Built with React and designed with an editorial-style interface.
+A comprehensive financial calculator that helps you decide whether renting or buying a home makes more sense for a wide variety of scenarios.
 
 ## Features
 
