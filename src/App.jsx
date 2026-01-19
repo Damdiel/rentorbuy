@@ -54,6 +54,7 @@ function App() {
   // Assumptions
   const [homeAppreciation, setHomeAppreciation] = useState(3);
   const [investmentReturn, setInvestmentReturn] = useState(10);
+  const [includeSellingCosts, setIncludeSellingCosts] = useState(true);
 
   // Calculate everything
   const calculations = useMemo(() => {
@@ -119,7 +120,7 @@ function App() {
       hoaMonthly,
       maintenanceRate: maintenanceRate / 100,
       homeAppreciationRate: homeAppreciation / 100,
-      sellingCostRate: 0.06,
+      sellingCostRate: includeSellingCosts ? 0.06 : 0,
       yearsToAnalyze,
       // Pass tax calculation functions
       taxableIncome,
@@ -202,6 +203,7 @@ function App() {
     yearsToAnalyze,
     homeAppreciation,
     investmentReturn,
+    includeSellingCosts,
   ]);
 
   // Sensitivity analysis configuration
@@ -326,7 +328,7 @@ function App() {
         hoaMonthly,
         maintenanceRate: maintenanceRate / 100,
         homeAppreciationRate: testValues.homeAppreciation / 100,
-        sellingCostRate: 0.06,
+        sellingCostRate: includeSellingCosts ? 0.06 : 0,
         yearsToAnalyze: testValues.yearsToAnalyze,
         taxableIncome,
         filingStatus,
@@ -387,6 +389,7 @@ function App() {
     homeInsurance,
     hoaMonthly,
     maintenanceRate,
+    includeSellingCosts,
   ]);
 
   // Find breakeven point
@@ -770,6 +773,19 @@ function App() {
                 <span>%</span>
               </div>
             </div>
+
+            <div className="input-row toggle-row">
+              <label htmlFor="includeSellingCosts">Include Selling Costs (6%)</label>
+              <label className="toggle">
+                <input
+                  type="checkbox"
+                  id="includeSellingCosts"
+                  checked={includeSellingCosts}
+                  onChange={(e) => setIncludeSellingCosts(e.target.checked)}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
           </div>
         </div>
 
@@ -856,10 +872,12 @@ function App() {
                     <span className="value">{formatCurrency(calculations.buyingResults.savingsInvestmentBalance)}</span>
                   </div>
                 )}
-                <div className="stat">
-                  <span className="label">Selling Costs (6%)</span>
-                  <span className="value">-{formatCurrency(calculations.buyingResults.sellingCosts)}</span>
-                </div>
+                {includeSellingCosts && (
+                  <div className="stat">
+                    <span className="label">Selling Costs (6%)</span>
+                    <span className="value">-{formatCurrency(calculations.buyingResults.sellingCosts)}</span>
+                  </div>
+                )}
                 <div className="stat final">
                   <span className="label">Net Position</span>
                   <span className="value">{formatCurrency(calculations.buyNetPosition)}</span>
@@ -1019,7 +1037,7 @@ function App() {
             <ul>
               <li>Home appreciation rate: {formatPercent(homeAppreciation)} annually</li>
               <li>Maintenance costs: {formatPercent(maintenanceRate)} of home value annually</li>
-              <li>Selling costs: 6% of sale price (agent fees, closing costs)</li>
+              <li>Selling costs: {includeSellingCosts ? '6% of sale price (agent fees, closing costs)' : 'Not included'}</li>
               <li>S&P 500 average return: {formatPercent(investmentReturn)} annually</li>
               <li>Renter's insurance: $200/year</li>
               <li>PMI drops off when LTV reaches 80%</li>
