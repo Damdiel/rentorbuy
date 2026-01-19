@@ -45,7 +45,7 @@ function App() {
   const [maintenanceRate, setMaintenanceRate] = useState(1); // 1% of home value annually
 
   // Renting inputs
-  const [monthlyRent, setMonthlyRent] = useState(3000);
+  const [monthlyRent, setMonthlyRent] = useState(2300);
   const [annualRentIncrease, setAnnualRentIncrease] = useState(4);
 
   // Analysis period
