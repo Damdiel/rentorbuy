@@ -434,7 +434,7 @@ function App() {
     <div className="app">
       <header className="header">
         <h1>Rent or Buy Calculator</h1>
-        <p>Calculate whether renting or buying makes more financial sense for your situation</p>
+        <p>Calculate whether renting or buying makes more financial sense</p>
         <nav className="tabs">
           <button
             className={`tab ${activeTab === 'calculator' ? 'active' : ''}`}
