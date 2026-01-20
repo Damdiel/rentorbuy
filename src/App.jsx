@@ -1046,6 +1046,18 @@ function App() {
               <li>When buying is cheaper than renting (e.g., after payoff), savings are invested at S&P rate</li>
             </ul>
           </div>
+
+          <div className="disclaimers">
+            <h3>Disclaimers</h3>
+            <p>This calculator provides estimates for educational purposes only and should not be considered financial advice. Notable limitations include:</p>
+            <ul>
+              <li>Does not model refinancing scenarios, including starting with an adjustable-rate mortgage (ARM) and refinancing to a fixed rate when rates drop</li>
+              <li>Does not factor in moving costs or security deposits for renters — US renters move more frequently than homeowners on average, incurring repeated costs</li>
+              <li>Tax calculations are simplified estimates and may not reflect your actual tax situation</li>
+              <li>Investment returns are not guaranteed and actual market performance varies significantly year to year</li>
+              <li>Does not account for major home repairs, renovations, or unexpected expenses</li>
+            </ul>
+          </div>
             </>
           )}
 
