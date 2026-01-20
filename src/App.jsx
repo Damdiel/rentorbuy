@@ -156,7 +156,8 @@ function App() {
     // Calculate first year tax benefit for monthly display
     const firstYearTaxBenefit = buyingResults.yearlyBreakdown[0]?.taxBenefit || 0;
     const monthlyTaxBenefit = firstYearTaxBenefit / 12;
-    const netMonthlyBuying = totalMonthlyWithExtra - monthlyTaxBenefit;
+    const monthlyMaintenance = (homePrice * maintenanceRate / 100) / 12;
+    const netMonthlyBuying = totalMonthlyWithExtra + monthlyMaintenance - monthlyTaxBenefit;
 
     return {
       loanAmount,
@@ -168,6 +169,7 @@ function App() {
       monthlyPropertyTax,
       annualPropertyTax,
       monthlyInsurance,
+      monthlyMaintenance,
       totalMonthlyBuying,
       totalMonthlyWithExtra,
       firstYearInterest,
@@ -833,9 +835,13 @@ function App() {
                   <span className="label">Monthly HOA</span>
                   <span className="value">{formatCurrency(hoaMonthly)}</span>
                 </div>
+                <div className="stat">
+                  <span className="label">Monthly Maintenance</span>
+                  <span className="value">{formatCurrency(calculations.monthlyMaintenance)}</span>
+                </div>
                 <div className="stat total">
                   <span className="label">Total Monthly Cost</span>
-                  <span className="value">{formatCurrency(calculations.totalMonthlyWithExtra)}</span>
+                  <span className="value">{formatCurrency(calculations.totalMonthlyWithExtra + calculations.monthlyMaintenance)}</span>
                 </div>
                 {calculations.monthlyTaxBenefit > 0 && (
                   <div className="stat highlight">
