@@ -248,10 +248,9 @@ body {
   flex: 1;
 }
 
-.toggle-note {
-  flex: 0 0 auto;
+.inline-note {
   margin-left: var(--space-sm);
-  white-space: nowrap;
+  font-weight: 400;
 }
 
 .toggle {

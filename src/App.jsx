@@ -537,7 +537,15 @@ function App() {
             </div>
 
             <div className="input-row toggle-row">
-              <label htmlFor="includePMI">Include PMI</label>
+              <label htmlFor="includePMI">
+                Include PMI
+                <span
+                  className="note inline-note"
+                  style={{ visibility: includePMI && calculations.downPaymentPercent >= 20 ? 'visible' : 'hidden' }}
+                >
+                  (No PMI needed with 20%+ down)
+                </span>
+              </label>
               <label className="toggle">
                 <input
                   type="checkbox"
@@ -547,12 +555,6 @@ function App() {
                 />
                 <span className="slider"></span>
               </label>
-              <span
-                className="note toggle-note"
-                style={{ visibility: includePMI && calculations.downPaymentPercent >= 20 ? 'visible' : 'hidden' }}
-              >
-                No PMI needed with 20%+ down
-              </span>
             </div>
 
             <div className="input-row toggle-row">
