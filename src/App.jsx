@@ -547,9 +547,12 @@ function App() {
                 />
                 <span className="slider"></span>
               </label>
-              {includePMI && calculations.downPaymentPercent >= 20 && (
-                <span className="note">No PMI needed with 20%+ down</span>
-              )}
+              <span
+                className="note toggle-note"
+                style={{ visibility: includePMI && calculations.downPaymentPercent >= 20 ? 'visible' : 'hidden' }}
+              >
+                No PMI needed with 20%+ down
+              </span>
             </div>
 
             <div className="input-row toggle-row">

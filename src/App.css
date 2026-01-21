@@ -239,12 +239,19 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: var(--space-sm);
 }
 
 .toggle-row > label:first-child {
   margin-bottom: 0;
+  flex: 1;
+}
+
+.toggle-note {
+  flex: 0 0 auto;
+  margin-left: var(--space-sm);
+  white-space: nowrap;
 }
 
 .toggle {
