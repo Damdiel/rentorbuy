@@ -1071,7 +1071,7 @@ function App() {
           </div>
 
           <div className="footer-link">
-            Suggest Improvements Here: <a href="https://github.com/Damdiel/rentorbuy" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="https://github.com/Damdiel/rentorbuy" target="_blank" rel="noopener noreferrer">Suggest Improvements Here</a>
           </div>
             </>
           )}
