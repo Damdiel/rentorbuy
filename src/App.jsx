@@ -1022,7 +1022,7 @@ function App() {
                           {buyYear.taxBenefit > 0 ? formatCurrency(buyYear.taxBenefit) : '-'}
                           {buyYear.taxBenefit > 0 && buyYear.shouldItemize && <span className="itemize-badge">I</span>}
                         </td>
-                        <td>{formatCurrency(buyYear.equity)}</td>
+                        <td className={buyYear.equity > 0 ? 'has-benefit' : ''}>{formatCurrency(buyYear.equity)}</td>
                         <td className={buyYear.savingsInvestmentBalance > 0 ? 'has-benefit' : ''}>
                           {buyYear.savingsInvestmentBalance > 0 ? formatCurrency(buyYear.savingsInvestmentBalance) : '-'}
                         </td>
