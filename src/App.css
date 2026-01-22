@@ -733,6 +733,24 @@ tr.paid-off:hover {
   font-weight: bold;
 }
 
+/* Footer Link */
+.footer-link {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+  padding: var(--space-lg) 0;
+}
+
+.footer-link a {
+  color: var(--color-ink-faint);
+  text-decoration: underline;
+  transition: color 0.15s ease;
+}
+
+.footer-link a:hover {
+  color: var(--color-ink);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .main {

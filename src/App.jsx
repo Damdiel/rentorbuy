@@ -1069,6 +1069,10 @@ function App() {
               <li>Does not account for major home repairs, renovations, or unexpected expenses</li>
             </ul>
           </div>
+
+          <div className="footer-link">
+            Suggest Improvements Here: <a href="https://github.com/Damdiel/rentorbuy" target="_blank" rel="noopener noreferrer">GitHub</a>
+          </div>
             </>
           )}
 
