@@ -16,6 +16,7 @@ import {
   calculatePointsEffect,
   AVG_HOME_INSURANCE_RATE,
   AVG_HOA_MONTHLY,
+  REFI_CLOSING_COST_RATE,
 } from './utils/mortgageCalculations';
 import './App.css';
 
@@ -33,6 +34,13 @@ function App() {
   const [includePMI, setIncludePMI] = useState(true);
   const [buyingPoints, setBuyingPoints] = useState(false);
   const [numPoints, setNumPoints] = useState(1);
+
+  // Refinance inputs
+  const [calculateRefinance, setCalculateRefinance] = useState(false);
+  const [refiYear, setRefiYear] = useState(5);
+  const [refiRate, setRefiRate] = useState(5.5);
+  const [refiBuyingPoints, setRefiBuyingPoints] = useState(false);
+  const [refiNumPoints, setRefiNumPoints] = useState(1);
 
   // Location and tax inputs
   const [state, setState] = useState('AZ');
@@ -134,6 +142,13 @@ function App() {
       annualRentIncrease: annualRentIncrease / 100,
       rentersInsurance: 200,
       investmentReturn: investmentReturn / 100,
+      // Refinance parameters
+      calculateRefinance,
+      refiYear,
+      refiRate: refiRate / 100,
+      refiBuyingPoints,
+      refiNumPoints,
+      refiClosingCostRate: REFI_CLOSING_COST_RATE,
     });
 
     // Calculate renting costs with investment using yearly buying costs
@@ -184,6 +199,9 @@ function App() {
       rentNetPosition,
       difference: Math.abs(difference),
       buyingIsBetter,
+      // Refinance info
+      refiInfo: buyingResults.refiInfo,
+      totalRefiCosts: buyingResults.totalRefiCosts,
     };
   }, [
     homePrice,
@@ -206,6 +224,11 @@ function App() {
     homeAppreciation,
     investmentReturn,
     includeSellingCosts,
+    calculateRefinance,
+    refiYear,
+    refiRate,
+    refiBuyingPoints,
+    refiNumPoints,
   ]);
 
   // Sensitivity analysis configuration
@@ -342,6 +365,13 @@ function App() {
         annualRentIncrease: testValues.annualRentIncrease / 100,
         rentersInsurance: 200,
         investmentReturn: testValues.investmentReturn / 100,
+        // Refinance parameters
+        calculateRefinance,
+        refiYear,
+        refiRate: refiRate / 100,
+        refiBuyingPoints,
+        refiNumPoints,
+        refiClosingCostRate: REFI_CLOSING_COST_RATE,
       });
 
       const rentingResults = calculateRentingCosts({
@@ -392,6 +422,11 @@ function App() {
     hoaMonthly,
     maintenanceRate,
     includeSellingCosts,
+    calculateRefinance,
+    refiYear,
+    refiRate,
+    refiBuyingPoints,
+    refiNumPoints,
   ]);
 
   // Find breakeven point
@@ -586,6 +621,100 @@ function App() {
                   Cost: {formatCurrency(calculations.pointsCost)} | New Rate: {formatPercent(calculations.effectiveRate)}
                 </span>
               </div>
+            )}
+
+            <div className="input-row toggle-row">
+              <label htmlFor="calculateRefinance">Calculate Refinance</label>
+              <label className="toggle">
+                <input
+                  type="checkbox"
+                  id="calculateRefinance"
+                  checked={calculateRefinance}
+                  onChange={(e) => setCalculateRefinance(e.target.checked)}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+
+            {calculateRefinance && (
+              <>
+                <div className="input-row sub-input">
+                  <label htmlFor="refiYear">Refinance in Year: {refiYear}</label>
+                  <div className="slider-container">
+                    <input
+                      type="range"
+                      id="refiYear"
+                      min={1}
+                      max={loanTermYears - 1}
+                      step={1}
+                      value={refiYear}
+                      onChange={(e) => setRefiYear(Number(e.target.value))}
+                      className="range-slider"
+                    />
+                    <div className="slider-labels">
+                      <span>1</span>
+                      <span>{loanTermYears - 1}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="input-row sub-input">
+                  <label htmlFor="refiRate">New Interest Rate</label>
+                  <div className="input-with-suffix">
+                    <input
+                      type="number"
+                      id="refiRate"
+                      value={refiRate}
+                      step="0.125"
+                      onChange={(e) => setRefiRate(Number(e.target.value))}
+                    />
+                    <span>%</span>
+                  </div>
+                </div>
+
+                <div className="input-row sub-input toggle-row">
+                  <label htmlFor="refiBuyingPoints">Buy Points at Refi</label>
+                  <label className="toggle">
+                    <input
+                      type="checkbox"
+                      id="refiBuyingPoints"
+                      checked={refiBuyingPoints}
+                      onChange={(e) => setRefiBuyingPoints(e.target.checked)}
+                    />
+                    <span className="slider"></span>
+                  </label>
+                </div>
+
+                {refiBuyingPoints && (
+                  <div className="input-row sub-input">
+                    <label htmlFor="refiNumPoints">Refi Points</label>
+                    <select
+                      id="refiNumPoints"
+                      value={refiNumPoints}
+                      onChange={(e) => setRefiNumPoints(Number(e.target.value))}
+                    >
+                      <option value={1}>1 point (-0.25%)</option>
+                      <option value={2}>2 points (-0.50%)</option>
+                      <option value={3}>3 points (-0.75%)</option>
+                    </select>
+                  </div>
+                )}
+
+                {calculations.refiInfo && (
+                  <div className="refi-summary sub-input">
+                    <span className="note">
+                      Balance at Refi: {formatCurrency(calculations.refiInfo.remainingBalance)} | 
+                      LTV: {formatPercent(calculations.refiInfo.ltvAtRefi)} | 
+                      {calculations.refiInfo.refiNeedsPMI ? ' PMI Required' : ' No PMI'}
+                    </span>
+                    <span className="note">
+                      Closing Costs: {formatCurrency(calculations.refiInfo.refiClosingCosts)} | 
+                      New Rate: {formatPercent(calculations.refiInfo.newRate)} | 
+                      Monthly Savings: {formatCurrency(calculations.refiInfo.monthlySavings)}
+                    </span>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -889,6 +1018,29 @@ function App() {
                     <span className="value">-{formatCurrency(calculations.buyingResults.sellingCosts)}</span>
                   </div>
                 )}
+                {calculations.refiInfo && (
+                  <>
+                    <hr />
+                    <div className="stat highlight">
+                      <span className="label">Refinance Year {calculations.refiInfo.refiYear}</span>
+                      <span className="value">{formatPercent(calculations.refiInfo.originalRate)} → {formatPercent(calculations.refiInfo.newRate)}</span>
+                    </div>
+                    <div className="stat">
+                      <span className="label">Refi Closing Costs</span>
+                      <span className="value">{formatCurrency(calculations.refiInfo.refiClosingCosts)}</span>
+                    </div>
+                    <div className="stat">
+                      <span className="label">Monthly Payment Change</span>
+                      <span className="value">{formatCurrency(calculations.refiInfo.oldMonthlyPayment)} → {formatCurrency(calculations.refiInfo.newMonthlyPayment)}</span>
+                    </div>
+                    {calculations.refiInfo.refiNeedsPMI && (
+                      <div className="stat">
+                        <span className="label">PMI Restarts at Refi</span>
+                        <span className="value">Yes (LTV {formatPercent(calculations.refiInfo.ltvAtRefi)})</span>
+                      </div>
+                    )}
+                  </>
+                )}
                 <div className="stat final">
                   <span className="label">Net Position</span>
                   <span className="value">{formatCurrency(calculations.buyNetPosition)}</span>
@@ -1012,10 +1164,11 @@ function App() {
                     const rentNet = rentYear.investmentEndBalance || 0;
                     const better = buyNet > rentNet ? 'Buy' : 'Rent';
                     return (
-                      <tr key={buyYear.year} className={buyYear.isPaidOff ? 'paid-off' : ''}>
+                      <tr key={buyYear.year} className={`${buyYear.isPaidOff ? 'paid-off' : ''} ${buyYear.isRefiYear ? 'refi-year' : ''}`}>
                         <td>
                           {buyYear.year}
                           {buyYear.isPaidOff && <span className="badge">Paid</span>}
+                          {buyYear.isRefiYear && <span className="badge refi">Refi</span>}
                         </td>
                         <td>{formatCurrency(buyYear.totalCost)}</td>
                         <td className={buyYear.taxBenefit > 0 ? 'has-benefit' : 'no-benefit'}>
@@ -1040,6 +1193,7 @@ function App() {
             <p className="table-note">
               <span className="badge-legend"><span className="badge">Paid</span> = Mortgage paid off</span>
               <span className="badge-legend"><span className="itemize-badge">I</span> = Itemizing deductions</span>
+              {calculateRefinance && <span className="badge-legend"><span className="badge refi">Refi</span> = Refinance year</span>}
             </p>
           </div>
 
@@ -1055,6 +1209,13 @@ function App() {
               <li>Tax benefits recalculated each year (itemize vs. standard)</li>
               <li>No tax benefits after mortgage payoff (no interest to deduct)</li>
               <li>When buying is cheaper than renting (e.g., after payoff), savings are invested at S&P rate</li>
+              {calculateRefinance && calculations.refiInfo && (
+                <>
+                  <li>Refinance in year {refiYear} from {formatPercent(calculations.refiInfo.originalRate)} to {formatPercent(calculations.refiInfo.newRate)}</li>
+                  <li>Refinance closing costs: {formatPercent(REFI_CLOSING_COST_RATE * 100)} of loan balance{refiBuyingPoints ? ` + ${refiNumPoints} point(s)` : ''}</li>
+                  <li>Post-refi PMI based on appreciated home value and remaining balance (LTV at refi: {formatPercent(calculations.refiInfo.ltvAtRefi)})</li>
+                </>
+              )}
             </ul>
           </div>
 
@@ -1062,7 +1223,7 @@ function App() {
             <h3>Disclaimers</h3>
             <p>This calculator provides estimates for educational purposes only and should not be considered financial advice. Notable limitations include:</p>
             <ul>
-              <li>Does not model refinancing scenarios, including starting with an adjustable-rate mortgage (ARM) and refinancing to a fixed rate when rates drop</li>
+              <li>Refinance modeling assumes keeping the original payoff date (shorter remaining term); does not model ARMs or multiple refinances</li>
               <li>Does not factor in moving costs or security deposits for renters — US renters move more frequently than homeowners on average, incurring repeated costs</li>
               <li>Tax calculations are simplified estimates and may not reflect your actual tax situation</li>
               <li>Investment returns are not guaranteed and actual market performance varies significantly year to year</li>

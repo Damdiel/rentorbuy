@@ -151,6 +151,9 @@ export function calculatePMIDropoffMonth(schedule, homeValue) {
   return null;
 }
 
+// Typical refinance closing costs as percentage of loan amount
+export const REFI_CLOSING_COST_RATE = 0.02; // 2% of loan amount
+
 // Calculate total cost of buying over N years
 export function calculateBuyingCosts(params) {
   const {
@@ -181,6 +184,13 @@ export function calculateBuyingCosts(params) {
     annualRentIncrease = 0.04,
     rentersInsurance = 200,
     investmentReturn = SP500_AVG_RETURN,
+    // Refinance parameters
+    calculateRefinance = false,
+    refiYear = 5,
+    refiRate = 0.05,
+    refiBuyingPoints = false,
+    refiNumPoints = 1,
+    refiClosingCostRate = REFI_CLOSING_COST_RATE,
   } = params;
 
   const loanAmount = homePrice - downPayment;
@@ -194,18 +204,116 @@ export function calculateBuyingCosts(params) {
     pointsCost = pointsEffect.pointsCost;
   }
 
-  const baseMonthlyMortgage = calculateMonthlyPayment(loanAmount, effectiveRate, loanTermYears);
-  const schedule = generateAmortizationSchedule(loanAmount, effectiveRate, loanTermYears, extraMonthlyPayment);
+  // Generate initial schedule (pre-refinance or full if no refi)
+  let schedule = generateAmortizationSchedule(loanAmount, effectiveRate, loanTermYears, extraMonthlyPayment);
+  let baseMonthlyMortgage = calculateMonthlyPayment(loanAmount, effectiveRate, loanTermYears);
+  
+  // Refinance tracking
+  let refiInfo = null;
+  let refiPointsCost = 0;
+  let refiClosingCosts = 0;
+  
+  if (calculateRefinance && refiYear > 0 && refiYear < loanTermYears) {
+    // Get remaining balance at refinance point
+    const refiMonth = refiYear * 12;
+    const preRefiSchedule = schedule.slice(0, refiMonth);
+    const remainingBalance = preRefiSchedule.length > 0 
+      ? preRefiSchedule[preRefiSchedule.length - 1].balance 
+      : loanAmount;
+    
+    // Calculate appreciated home value at refi year
+    const homeValueAtRefi = homePrice * Math.pow(1 + homeAppreciationRate, refiYear);
+    
+    // Calculate LTV at refinance
+    const ltvAtRefi = remainingBalance / homeValueAtRefi;
+    const refiNeedsPMI = includePMI && ltvAtRefi > 0.8;
+    
+    // Apply refi points if buying them
+    let refiEffectiveRate = refiRate;
+    if (refiBuyingPoints && refiNumPoints > 0) {
+      const refiPointsEffect = calculatePointsEffect(remainingBalance, refiRate, refiNumPoints);
+      refiEffectiveRate = refiPointsEffect.adjustedRate;
+      refiPointsCost = refiPointsEffect.pointsCost;
+    }
+    
+    // Calculate closing costs
+    refiClosingCosts = remainingBalance * refiClosingCostRate + refiPointsCost;
+    
+    // Remaining term after refi (keeping original payoff date)
+    const remainingYears = loanTermYears - refiYear;
+    
+    // Generate post-refi schedule
+    const postRefiSchedule = generateAmortizationSchedule(
+      remainingBalance, 
+      refiEffectiveRate, 
+      remainingYears, 
+      extraMonthlyPayment
+    );
+    
+    // Renumber post-refi months to continue from refi point
+    const adjustedPostRefiSchedule = postRefiSchedule.map((payment, index) => ({
+      ...payment,
+      month: refiMonth + index + 1,
+      isPostRefi: true,
+    }));
+    
+    // Combine schedules
+    schedule = [...preRefiSchedule, ...adjustedPostRefiSchedule];
+    
+    // Update base monthly mortgage to post-refi amount for display
+    const postRefiMonthlyMortgage = calculateMonthlyPayment(remainingBalance, refiEffectiveRate, remainingYears);
+    
+    refiInfo = {
+      refiYear,
+      refiMonth,
+      remainingBalance,
+      homeValueAtRefi,
+      ltvAtRefi: ltvAtRefi * 100, // as percentage
+      refiNeedsPMI,
+      originalRate: effectiveRate * 100,
+      newRate: refiEffectiveRate * 100,
+      refiPointsCost,
+      refiClosingCosts,
+      oldMonthlyPayment: baseMonthlyMortgage,
+      newMonthlyPayment: postRefiMonthlyMortgage,
+      monthlySavings: baseMonthlyMortgage - postRefiMonthlyMortgage,
+    };
+    
+    // Update base monthly for post-refi display
+    baseMonthlyMortgage = postRefiMonthlyMortgage;
+  }
+  
   const { annualSummary, payoffMonth, payoffYear } = getAnnualSummary(schedule, yearsToAnalyze);
 
   // Calculate PMI dropoff based on actual schedule with extra payments
-  const pmiDropoffMonth = includePMI ? calculatePMIDropoffMonth(schedule, homePrice) : 0;
+  // For refi, we need to recalculate based on appreciated home value
+  let pmiDropoffMonth = includePMI ? calculatePMIDropoffMonth(schedule, homePrice) : 0;
+  
+  // If refinancing, PMI may restart or end based on new LTV
+  if (refiInfo && refiInfo.refiNeedsPMI) {
+    // Calculate when PMI drops off post-refi based on appreciated value
+    const refiMonth = refiYear * 12;
+    for (let i = refiMonth; i < schedule.length; i++) {
+      const yearAtMonth = i / 12;
+      const homeValueAtMonth = homePrice * Math.pow(1 + homeAppreciationRate, yearAtMonth);
+      if (schedule[i].balance <= homeValueAtMonth * 0.8) {
+        pmiDropoffMonth = i + 1;
+        break;
+      }
+    }
+  } else if (refiInfo && !refiInfo.refiNeedsPMI) {
+    // PMI ended at refi due to equity
+    pmiDropoffMonth = Math.min(pmiDropoffMonth || Infinity, refiYear * 12);
+  }
 
   const yearlyBreakdown = [];
   let totalCost = downPayment + pointsCost; // Upfront costs
   let totalEquity = downPayment;
   let totalTaxSavings = 0;
   let savingsInvestmentBalance = 0; // Investment from savings when buying is cheaper
+  
+  // Add refi closing costs to total upfront (they're paid at refi year but we track them)
+  const totalRefiCosts = refiClosingCosts;
 
   // Get marginal rate and state tax for deduction calculations
   const marginalRate = getMarginalRate ? getMarginalRate(taxableIncome, filingStatus) : 0.24;
@@ -221,19 +329,32 @@ export function calculateBuyingCosts(params) {
     const propertyTax = homeValueThisYear * propertyTaxRate;
 
     // PMI (check if still applicable)
+    // After refi, PMI is based on appreciated home value
     let pmiCost = 0;
     if (includePMI && !yearData.isPaidOff) {
       const startMonth = (year - 1) * 12 + 1;
       const endMonth = Math.min(year * 12, schedule.length);
       for (let m = startMonth; m <= endMonth; m++) {
         if (pmiDropoffMonth && m >= pmiDropoffMonth) break;
-        // Calculate PMI based on current balance
         const monthData = schedule[m - 1];
-        if (monthData && monthData.balance > homePrice * 0.8) {
+        if (!monthData) continue;
+        
+        // Use appreciated home value for LTV calculation post-refi
+        const monthsElapsed = m;
+        const yearsElapsed = monthsElapsed / 12;
+        const homeValueAtMonth = refiInfo && m > refiInfo.refiMonth
+          ? homePrice * Math.pow(1 + homeAppreciationRate, yearsElapsed)
+          : homePrice;
+        
+        if (monthData.balance > homeValueAtMonth * 0.8) {
           pmiCost += (monthData.balance * PMI_RATE) / 12;
         }
       }
     }
+    
+    // Add refinance closing costs in the refi year
+    const isRefiYear = refiInfo && year === refiInfo.refiYear;
+    const refiCostsThisYear = isRefiYear ? refiInfo.refiClosingCosts : 0;
 
     // Other costs
     const insurance = homeInsurance || homeValueThisYear * AVG_HOME_INSURANCE_RATE;
@@ -267,7 +388,8 @@ export function calculateBuyingCosts(params) {
       pmiCost +
       insurance +
       hoa +
-      maintenance;
+      maintenance +
+      refiCostsThisYear;
 
     // Net cost after tax benefit
     const yearCostAfterTax = yearCostBeforeTax - taxBenefit;
@@ -313,6 +435,9 @@ export function calculateBuyingCosts(params) {
       rentComparison: rentThisYear,
       savingsVsRent,
       savingsInvestmentBalance,
+      // Refinance tracking
+      isRefiYear,
+      refiClosingCosts: refiCostsThisYear,
     });
   }
 
@@ -339,6 +464,9 @@ export function calculateBuyingCosts(params) {
     payoffYear,
     originalPayoffMonths: loanTermYears * 12,
     monthsSaved: (loanTermYears * 12) - payoffMonth,
+    // Refinance info
+    refiInfo,
+    totalRefiCosts,
   };
 }
 

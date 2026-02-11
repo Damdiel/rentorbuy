@@ -1157,3 +1157,38 @@ input[type="number"]::-webkit-inner-spin-button {
     font-size: 0.75rem;
   }
 }
+
+/* Refinance Styles */
+.refi-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+  background: var(--color-paper-warm);
+  border-left: 3px solid var(--color-buy);
+  margin-top: var(--space-sm);
+}
+
+.refi-summary .note {
+  font-size: 0.8rem;
+  color: var(--color-ink-muted);
+}
+
+tr.refi-year {
+  background: rgba(var(--color-buy-rgb, 74, 144, 226), 0.1);
+}
+
+tr.refi-year td:first-child {
+  font-weight: 600;
+}
+
+.badge.refi {
+  background: var(--color-buy);
+  color: white;
+}
+
+.sub-input.toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
