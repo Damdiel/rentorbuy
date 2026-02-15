@@ -41,6 +41,7 @@ function App() {
   const [calculateRefinance, setCalculateRefinance] = useState(false);
   const [refiYear, setRefiYear] = useState(5);
   const [refiRate, setRefiRate] = useState(5.5);
+  const [refiTermYears, setRefiTermYears] = useState(30);
   const [refiBuyingPoints, setRefiBuyingPoints] = useState(false);
   const [refiNumPoints, setRefiNumPoints] = useState(1);
 
@@ -154,6 +155,7 @@ function App() {
       calculateRefinance,
       refiYear,
       refiRate: refiRate / 100,
+      refiTermYears,
       refiBuyingPoints,
       refiNumPoints,
       refiClosingCostRate: REFI_CLOSING_COST_RATE,
@@ -241,6 +243,7 @@ function App() {
     calculateRefinance,
     refiYear,
     refiRate,
+    refiTermYears,
     refiBuyingPoints,
     refiNumPoints,
     houseSqft,
@@ -385,6 +388,7 @@ function App() {
         calculateRefinance,
         refiYear,
         refiRate: refiRate / 100,
+        refiTermYears,
         refiBuyingPoints,
         refiNumPoints,
         refiClosingCostRate: REFI_CLOSING_COST_RATE,
@@ -444,6 +448,7 @@ function App() {
     calculateRefinance,
     refiYear,
     refiRate,
+    refiTermYears,
     refiBuyingPoints,
     refiNumPoints,
     houseSqft,
@@ -693,6 +698,20 @@ function App() {
                   </div>
                 </div>
 
+                <div className="input-row sub-input">
+                  <label htmlFor="refiTermYears">New Loan Term</label>
+                  <select
+                    id="refiTermYears"
+                    value={refiTermYears}
+                    onChange={(e) => setRefiTermYears(Number(e.target.value))}
+                  >
+                    <option value={15}>15 years</option>
+                    <option value={20}>20 years</option>
+                    <option value={30}>30 years</option>
+                  </select>
+                  <span className="note">Payoff in year {refiYear + refiTermYears}</span>
+                </div>
+
                 <div className="input-row sub-input toggle-row">
                   <label htmlFor="refiBuyingPoints">Buy Points at Refi</label>
                   <label className="toggle">
@@ -731,7 +750,12 @@ function App() {
                     <span className="note">
                       Closing Costs: {formatCurrency(calculations.refiInfo.refiClosingCosts)} | 
                       New Rate: {formatPercent(calculations.refiInfo.newRate)} | 
-                      Monthly Savings: {formatCurrency(calculations.refiInfo.monthlySavings)}
+                      Payoff Year: {calculations.refiInfo.totalPayoffYears}
+                    </span>
+                    <span className="note">
+                      Monthly: {formatCurrency(calculations.refiInfo.oldMonthlyPayment)} → {formatCurrency(calculations.refiInfo.newMonthlyPayment)} | 
+                      {calculations.refiInfo.monthlySavings >= 0 ? ' Savings: ' : ' Increase: '}
+                      {formatCurrency(Math.abs(calculations.refiInfo.monthlySavings))}/mo
                     </span>
                   </div>
                 )}

@@ -193,6 +193,7 @@ export function calculateBuyingCosts(params) {
     calculateRefinance = false,
     refiYear = 5,
     refiRate = 0.05,
+    refiTermYears = 30, // New loan term after refinance
     refiBuyingPoints = false,
     refiNumPoints = 1,
     refiClosingCostRate = REFI_CLOSING_COST_RATE,
@@ -246,14 +247,11 @@ export function calculateBuyingCosts(params) {
     // Calculate closing costs
     refiClosingCosts = remainingBalance * refiClosingCostRate + refiPointsCost;
     
-    // Remaining term after refi (keeping original payoff date)
-    const remainingYears = loanTermYears - refiYear;
-    
-    // Generate post-refi schedule
+    // Generate post-refi schedule with new loan term
     const postRefiSchedule = generateAmortizationSchedule(
       remainingBalance, 
       refiEffectiveRate, 
-      remainingYears, 
+      refiTermYears, 
       extraMonthlyPayment
     );
     
@@ -268,11 +266,16 @@ export function calculateBuyingCosts(params) {
     schedule = [...preRefiSchedule, ...adjustedPostRefiSchedule];
     
     // Update base monthly mortgage to post-refi amount for display
-    const postRefiMonthlyMortgage = calculateMonthlyPayment(remainingBalance, refiEffectiveRate, remainingYears);
+    const postRefiMonthlyMortgage = calculateMonthlyPayment(remainingBalance, refiEffectiveRate, refiTermYears);
+    
+    // Calculate total payoff: refi year + new term
+    const totalPayoffYears = refiYear + refiTermYears;
     
     refiInfo = {
       refiYear,
       refiMonth,
+      refiTermYears,
+      totalPayoffYears,
       remainingBalance,
       homeValueAtRefi,
       ltvAtRefi: ltvAtRefi * 100, // as percentage
