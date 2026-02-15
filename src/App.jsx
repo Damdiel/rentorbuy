@@ -17,6 +17,8 @@ import {
   AVG_HOME_INSURANCE_RATE,
   AVG_HOA_MONTHLY,
   REFI_CLOSING_COST_RATE,
+  UTILITY_COST_PER_SQFT_HOUSE,
+  UTILITY_COST_PER_SQFT_APT,
 } from './utils/mortgageCalculations';
 import './App.css';
 
@@ -51,6 +53,8 @@ function App() {
   const [homeInsurance, setHomeInsurance] = useState(Math.round(500000 * AVG_HOME_INSURANCE_RATE));
   const [hoaMonthly, setHoaMonthly] = useState(AVG_HOA_MONTHLY);
   const [maintenanceRate, setMaintenanceRate] = useState(1); // 1% of home value annually
+  const [houseSqft, setHouseSqft] = useState(2000);
+  const [apartmentSqft, setApartmentSqft] = useState(1000);
 
   // Renting inputs
   const [monthlyRent, setMonthlyRent] = useState(2300);
@@ -92,8 +96,12 @@ function App() {
     // Insurance and HOA
     const monthlyInsurance = homeInsurance / 12;
 
+    // Utilities
+    const monthlyUtilitiesHouse = houseSqft * UTILITY_COST_PER_SQFT_HOUSE;
+    const monthlyUtilitiesApt = apartmentSqft * UTILITY_COST_PER_SQFT_APT;
+
     // Total monthly housing cost (buying) - base costs without extra payment
-    const totalMonthlyBuying = monthlyMortgagePI + monthlyPMI + monthlyPropertyTax + monthlyInsurance + hoaMonthly;
+    const totalMonthlyBuying = monthlyMortgagePI + monthlyPMI + monthlyPropertyTax + monthlyInsurance + hoaMonthly + monthlyUtilitiesHouse;
     const totalMonthlyWithExtra = totalMonthlyBuying + extraMonthlyPayment;
 
     // State income tax
@@ -149,6 +157,8 @@ function App() {
       refiBuyingPoints,
       refiNumPoints,
       refiClosingCostRate: REFI_CLOSING_COST_RATE,
+      // Utilities
+      monthlyUtilities: monthlyUtilitiesHouse,
     });
 
     // Calculate renting costs with investment using yearly buying costs
@@ -160,6 +170,7 @@ function App() {
       yearlyBuyingCosts: buyingResults.yearlyBreakdown,
       investmentReturn: investmentReturn / 100,
       rentersInsurance: 200,
+      monthlyUtilities: monthlyUtilitiesApt,
     });
 
     // Comparison
@@ -202,6 +213,9 @@ function App() {
       // Refinance info
       refiInfo: buyingResults.refiInfo,
       totalRefiCosts: buyingResults.totalRefiCosts,
+      // Utilities
+      monthlyUtilitiesHouse,
+      monthlyUtilitiesApt,
     };
   }, [
     homePrice,
@@ -229,6 +243,8 @@ function App() {
     refiRate,
     refiBuyingPoints,
     refiNumPoints,
+    houseSqft,
+    apartmentSqft,
   ]);
 
   // Sensitivity analysis configuration
@@ -372,6 +388,8 @@ function App() {
         refiBuyingPoints,
         refiNumPoints,
         refiClosingCostRate: REFI_CLOSING_COST_RATE,
+        // Utilities
+        monthlyUtilities: houseSqft * UTILITY_COST_PER_SQFT_HOUSE,
       });
 
       const rentingResults = calculateRentingCosts({
@@ -382,6 +400,7 @@ function App() {
         yearlyBuyingCosts: buyingResults.yearlyBreakdown,
         investmentReturn: testValues.investmentReturn / 100,
         rentersInsurance: 200,
+        monthlyUtilities: apartmentSqft * UTILITY_COST_PER_SQFT_APT,
       });
 
       const buyNet = buyingResults.netFromSale;
@@ -427,6 +446,8 @@ function App() {
     refiRate,
     refiBuyingPoints,
     refiNumPoints,
+    houseSqft,
+    apartmentSqft,
   ]);
 
   // Find breakeven point
@@ -823,6 +844,22 @@ function App() {
               </div>
               <span className="note">% of home value. Typical: 1-2%</span>
             </div>
+
+            <div className="input-row">
+              <label htmlFor="houseSqft">House Square Footage</label>
+              <div className="input-with-suffix">
+                <input
+                  type="number"
+                  id="houseSqft"
+                  value={houseSqft}
+                  min={500}
+                  step={100}
+                  onChange={(e) => setHouseSqft(Number(e.target.value))}
+                />
+                <span>sqft</span>
+              </div>
+              <span className="note">Est. utilities: {formatCurrency(houseSqft * UTILITY_COST_PER_SQFT_HOUSE)}/mo</span>
+            </div>
           </div>
 
           <div className="input-group">
@@ -856,6 +893,22 @@ function App() {
                 <span>%</span>
               </div>
               <span className="note">Typical range: 3-5%</span>
+            </div>
+
+            <div className="input-row">
+              <label htmlFor="apartmentSqft">Apartment Square Footage</label>
+              <div className="input-with-suffix">
+                <input
+                  type="number"
+                  id="apartmentSqft"
+                  value={apartmentSqft}
+                  min={300}
+                  step={100}
+                  onChange={(e) => setApartmentSqft(Number(e.target.value))}
+                />
+                <span>sqft</span>
+              </div>
+              <span className="note">Est. utilities: {formatCurrency(apartmentSqft * UTILITY_COST_PER_SQFT_APT)}/mo</span>
             </div>
           </div>
 
@@ -973,6 +1026,10 @@ function App() {
                   <span className="label">Monthly Maintenance</span>
                   <span className="value">{formatCurrency(calculations.monthlyMaintenance)}</span>
                 </div>
+                <div className="stat">
+                  <span className="label">Monthly Utilities</span>
+                  <span className="value">{formatCurrency(calculations.monthlyUtilitiesHouse)}</span>
+                </div>
                 <div className="stat total">
                   <span className="label">Total Monthly Cost</span>
                   <span className="value">{formatCurrency(calculations.totalMonthlyWithExtra + calculations.monthlyMaintenance)}</span>
@@ -1066,6 +1123,10 @@ function App() {
                 <div className="stat">
                   <span className="label">Annual Rent Increase</span>
                   <span className="value">{formatPercent(annualRentIncrease)}</span>
+                </div>
+                <div className="stat">
+                  <span className="label">Monthly Utilities</span>
+                  <span className="value">{formatCurrency(calculations.monthlyUtilitiesApt)}</span>
                 </div>
                 <hr />
                 <div className="stat">

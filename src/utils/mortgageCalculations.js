@@ -12,6 +12,11 @@ export const AVG_HOME_INSURANCE_RATE = 0.0035; // ~$1,750 on $500k home
 // Average HOA (monthly)
 export const AVG_HOA_MONTHLY = 250;
 
+// Average monthly utility cost per square foot (electric, gas, water, trash, internet)
+// Houses tend to cost more per sqft due to less shared walls, larger HVAC systems
+export const UTILITY_COST_PER_SQFT_HOUSE = 0.15; // ~$300/mo for 2000 sqft house
+export const UTILITY_COST_PER_SQFT_APT = 0.12; // ~$120/mo for 1000 sqft apartment
+
 // Average S&P 500 annual return (historical)
 export const SP500_AVG_RETURN = 0.10;
 
@@ -191,6 +196,8 @@ export function calculateBuyingCosts(params) {
     refiBuyingPoints = false,
     refiNumPoints = 1,
     refiClosingCostRate = REFI_CLOSING_COST_RATE,
+    // Utilities
+    monthlyUtilities = 0,
   } = params;
 
   const loanAmount = homePrice - downPayment;
@@ -380,6 +387,9 @@ export function calculateBuyingCosts(params) {
     }
     totalTaxSavings += taxBenefit;
 
+    // Utilities (annual)
+    const utilities = monthlyUtilities * 12;
+
     // Total yearly cost (before tax benefit)
     const yearCostBeforeTax =
       yearData.interest +
@@ -389,6 +399,7 @@ export function calculateBuyingCosts(params) {
       insurance +
       hoa +
       maintenance +
+      utilities +
       refiCostsThisYear;
 
     // Net cost after tax benefit
@@ -423,6 +434,7 @@ export function calculateBuyingCosts(params) {
       insurance,
       hoa,
       maintenance,
+      utilities,
       taxBenefit,
       shouldItemize: deductionInfo?.shouldItemize || false,
       totalCostBeforeTax: yearCostBeforeTax,
@@ -480,6 +492,7 @@ export function calculateRentingCosts(params) {
     yearlyBuyingCosts, // Array of yearly buying costs to calculate savings each year
     investmentReturn = SP500_AVG_RETURN,
     rentersInsurance = 200,
+    monthlyUtilities = 0,
   } = params;
 
   const yearlyBreakdown = [];
@@ -489,7 +502,8 @@ export function calculateRentingCosts(params) {
   for (let year = 1; year <= yearsToAnalyze; year++) {
     // Rent for this year (with annual increases)
     const yearlyRent = monthlyRent * 12 * Math.pow(1 + annualRentIncrease, year - 1);
-    totalRentPaid += yearlyRent + rentersInsurance;
+    const utilities = monthlyUtilities * 12;
+    totalRentPaid += yearlyRent + rentersInsurance + utilities;
 
     // Investment growth at start of year
     const startBalance = investmentBalance;
@@ -497,7 +511,7 @@ export function calculateRentingCosts(params) {
 
     // Calculate savings from renting vs buying this year
     const buyingCostThisYear = yearlyBuyingCosts?.[year - 1]?.totalCost || 0;
-    const rentingCostThisYear = yearlyRent + rentersInsurance;
+    const rentingCostThisYear = yearlyRent + rentersInsurance + utilities;
     const savingsThisYear = Math.max(0, buyingCostThisYear - rentingCostThisYear);
 
     // Add savings to investment
@@ -507,6 +521,7 @@ export function calculateRentingCosts(params) {
       year,
       rent: yearlyRent,
       rentersInsurance,
+      utilities,
       totalCost: rentingCostThisYear,
       cumulativeRent: totalRentPaid,
       savingsVsBuying: savingsThisYear,
